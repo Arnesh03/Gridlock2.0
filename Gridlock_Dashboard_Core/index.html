@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Gridlock Dashboard Core" />
+  <title>Gridlock Core — Parking Intelligence</title>
+  
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  
+  <div id="loading" class="loading-overlay">
+    <div class="spinner"></div>
+    <p>Loading Intelligence Data...</p>
+  </div>
+
+  <header class="app-header">
+    <div class="logo">🚦 GRIDLOCK <span class="accent">CORE</span></div>
+    <div class="badge">Bengaluru Traffic Data</div>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab-btn active" data-target="overview">Overview Heatmap</button>
+    <button class="tab-btn" data-target="hotspots">Hotspot Analysis (CIS)</button>
+  </nav>
+
+  <main class="content">
+    <!-- Tab 1: Overview -->
+    <section id="overview" class="tab-content active">
+      <div class="kpi-grid">
+        <div class="kpi-card glass">
+          <div class="kpi-icon">📋</div>
+          <div class="kpi-val" id="kpi-total">-</div>
+          <div class="kpi-lbl">Total Violations</div>
+        </div>
+        <div class="kpi-card glass">
+          <div class="kpi-icon">🔴</div>
+          <div class="kpi-val" id="kpi-critical">-</div>
+          <div class="kpi-lbl">Critical Hotspots</div>
+        </div>
+        <div class="kpi-card glass">
+          <div class="kpi-icon">📅</div>
+          <div class="kpi-val" id="kpi-daily">-</div>
+          <div class="kpi-lbl">Avg Daily Violations</div>
+        </div>
+      </div>
+      
+      <div class="main-split">
+        <div class="glass map-container">
+          <h3>City Violation Density</h3>
+          <div id="heatmap-map" style="height: 500px; border-radius: 8px;"></div>
+        </div>
+        <div class="glass chart-container">
+          <h3>Violation Breakdown</h3>
+          <canvas id="violationChart"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tab 2: Hotspots -->
+    <section id="hotspots" class="tab-content">
+      <div class="main-split reverse">
+        <div class="glass map-container">
+          <h3>Congestion Impact Severity (CIS)</h3>
+          <div id="cis-map" style="height: 600px; border-radius: 8px;"></div>
+        </div>
+        <div class="glass table-container">
+          <h3>Top Congestion Zones</h3>
+          <div class="table-wrap">
+            <table id="hotspot-table">
+              <thead>
+                <tr>
+                  <th>Rank</th>
+                  <th>Score</th>
+                  <th>Violations</th>
+                  <th>Location</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

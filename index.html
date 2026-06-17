@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Gridlock AI — Intelligent Parking Violation Analytics & Enforcement Dashboard" />
+  <meta name="theme-color" content="#0a0f1a" />
+  <title>Gridlock AI — Parking Intelligence</title>
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <!-- Dashboard Styles -->
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- ══════════════ LOADING OVERLAY ══════════════ -->
+  <div id="loading-overlay" class="loading-overlay">
+    <div class="loader-content">
+      <div class="loader-spinner"></div>
+      <p class="loader-text">Initializing Gridlock AI…</p>
+    </div>
+  </div>
+
+  <!-- ══════════════ HEADER ══════════════ -->
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="header-left">
+        <span class="header-logo">🚦</span>
+        <div class="header-titles">
+          <h1 class="header-title">GRIDLOCK <span class="gradient-text">AI</span></h1>
+          <p class="header-subtitle">Parking Intelligence Platform</p>
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="date-badge" id="date-badge">
+          <span class="date-badge-icon">📅</span>
+          <span id="date-range-text">Loading…</span>
+        </div>
+      </div>
+    </div>
+    <div class="header-gradient-line"></div>
+  </header>
+
+  <!-- ══════════════ TAB BAR ══════════════ -->
+  <nav class="tab-bar">
+    <div class="tab-bar-inner">
+      <button class="tab-btn active" data-tab="overview"><span class="tab-icon">📊</span> Overview</button>
+      <button class="tab-btn" data-tab="hotspots"><span class="tab-icon">🔥</span> Hotspot Analysis</button>
+      <button class="tab-btn" data-tab="predictions"><span class="tab-icon">📈</span> Predictions</button>
+      <button class="tab-btn" data-tab="patrol"><span class="tab-icon">🚔</span> Patrol Routes</button>
+      <button class="tab-btn" data-tab="enforcement"><span class="tab-icon">⚡</span> Enforcement</button>
+      <button class="tab-btn" data-tab="bias"><span class="tab-icon">⚖️</span> Equity & Bias</button>
+    </div>
+  </nav>
+
+  <!-- ══════════════ MAIN CONTENT ══════════════ -->
+  <main class="main-content">
+
+    <!-- ───── TAB 1: OVERVIEW ───── -->
+    <section id="tab-overview" class="tab-panel active">
+      <!-- KPI Row -->
+      <div class="kpi-row">
+        <div class="glass-card kpi-card kpi-cyan anim-card" style="--i:0">
+          <div class="kpi-icon">🎫</div>
+          <div class="kpi-value" id="kpi-total-violations">—</div>
+          <div class="kpi-label">Total Violations</div>
+        </div>
+        <div class="glass-card kpi-card kpi-red anim-card" style="--i:1">
+          <div class="kpi-icon">🔴</div>
+          <div class="kpi-value" id="kpi-critical-hotspots">—</div>
+          <div class="kpi-label">Critical Hotspots</div>
+        </div>
+        <div class="glass-card kpi-card kpi-amber anim-card" style="--i:2">
+          <div class="kpi-icon">⏰</div>
+          <div class="kpi-value" id="kpi-peak-hour">—</div>
+          <div class="kpi-label">Peak Hour</div>
+        </div>
+        <div class="glass-card kpi-card kpi-green anim-card" style="--i:3">
+          <div class="kpi-icon">📊</div>
+          <div class="kpi-value" id="kpi-avg-daily">—</div>
+          <div class="kpi-label">Avg Daily</div>
+        </div>
+      </div>
+
+      <!-- Map + Charts Row -->
+      <div class="grid-60-40">
+        <div class="glass-card map-card anim-card" style="--i:4">
+          <h3 class="card-title">Violation Heatmap — Bengaluru</h3>
+          <div id="overview-map" class="map-container" style="height:450px;"></div>
+        </div>
+        <div class="chart-stack">
+          <div class="glass-card anim-card" style="--i:5">
+            <h3 class="card-title">Violation Type Breakdown</h3>
+            <div class="chart-wrap chart-wrap-doughnut"><canvas id="chart-violation-types"></canvas></div>
+          </div>
+          <div class="glass-card anim-card" style="--i:6">
+            <h3 class="card-title">Top 10 Police Stations</h3>
+            <div class="chart-wrap chart-wrap-bar"><canvas id="chart-top-stations"></canvas></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Trend Row -->
+      <div class="glass-card full-width anim-card" style="--i:7">
+        <h3 class="card-title">Violation Trend — Daily Counts</h3>
+        <div class="chart-wrap chart-wrap-trend"><canvas id="chart-daily-trend"></canvas></div>
+      </div>
+    </section>
+
+    <!-- ───── TAB 2: HOTSPOT ANALYSIS ───── -->
+    <section id="tab-hotspots" class="tab-panel">
+      <div class="glass-card map-card anim-card" style="--i:0">
+        <h3 class="card-title">Hotspot Map — CIS Severity Index</h3>
+        <div id="hotspot-map" class="map-container" style="height:500px;"></div>
+      </div>
+      <div class="glass-card anim-card" style="--i:1">
+        <h3 class="card-title">Hotspot Rankings</h3>
+        <div class="table-scroll">
+          <table class="data-table" id="hotspot-table">
+            <thead>
+              <tr>
+                <th>Rank</th>
+                <th>Location</th>
+                <th>CIS Score</th>
+                <th>Violations</th>
+                <th>Peak Hours</th>
+                <th>Junction</th>
+                <th>Station</th>
+              </tr>
+            </thead>
+            <tbody id="hotspot-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ───── TAB 3: PREDICTIONS ───── -->
+    <section id="tab-predictions" class="tab-panel">
+      <!-- KPI Row -->
+      <div class="kpi-row kpi-row-3">
+        <div class="glass-card kpi-card kpi-cyan anim-card" style="--i:0">
+          <div class="kpi-icon" id="pred-trend-icon">📈</div>
+          <div class="kpi-value" id="pred-trend-value">—</div>
+          <div class="kpi-label">Forecast Trend</div>
+        </div>
+        <div class="glass-card kpi-card kpi-amber anim-card" style="--i:1">
+          <div class="kpi-icon">🔮</div>
+          <div class="kpi-value" id="pred-next-week">—</div>
+          <div class="kpi-label">Predicted Next Week</div>
+        </div>
+        <div class="glass-card kpi-card kpi-green anim-card" style="--i:2">
+          <div class="kpi-icon">📆</div>
+          <div class="kpi-value" id="pred-peak-day">—</div>
+          <div class="kpi-label">Peak Violation Day</div>
+        </div>
+      </div>
+
+      <!-- Real-Time Scenario Simulator -->
+      <div class="glass-card full-width anim-card simulator-panel" style="--i:2.5; margin-bottom: 1.5rem; border: 1px solid var(--accent);">
+        <h3 class="card-title" style="color: var(--accent); margin-bottom: 1.5rem;">⚡ Real-Time Scenario Simulator</h3>
+        <div class="simulator-grid">
+          
+          <!-- Inputs -->
+          <div class="simulator-controls">
+            <div class="input-group">
+              <label>Police Station</label>
+              <select id="sim-station" class="sim-input"></select>
+            </div>
+            
+            <div class="input-group">
+              <label>Day of Week</label>
+              <select id="sim-day" class="sim-input">
+                <option value="Monday">Monday</option>
+                <option value="Tuesday">Tuesday</option>
+                <option value="Wednesday">Wednesday</option>
+                <option value="Thursday">Thursday</option>
+                <option value="Friday">Friday</option>
+                <option value="Saturday">Saturday</option>
+                <option value="Sunday">Sunday</option>
+              </select>
+            </div>
+
+            <div class="input-group">
+              <label>Time of Day: <span id="sim-hour-val" style="color:var(--text);">12:00 PM</span></label>
+              <input type="range" id="sim-hour" class="sim-slider" min="0" max="23" value="12">
+            </div>
+
+            <div class="input-group checkbox-group">
+              <label class="toggle-label">
+                <input type="checkbox" id="sim-quota" class="sim-checkbox">
+                <span class="toggle-switch"></span>
+                End of Month Quota Period
+              </label>
+            </div>
+          </div>
+
+          <!-- Outputs -->
+          <div class="simulator-outputs">
+            <div class="output-card">
+              <div class="output-label">Predicted Violations / Hour</div>
+              <div class="output-value" id="sim-out-count">--</div>
+            </div>
+            <div class="output-card">
+              <div class="output-label">Expected Congestion Severity</div>
+              <div class="output-value" id="sim-out-severity" style="font-size:1.5rem;">--</div>
+              <div class="severity-bar-container">
+                <div class="severity-bar-fill" id="sim-out-bar"></div>
+              </div>
+            </div>
+          </div>
+          
+        </div>
+      </div>
+
+      <!-- Charts Row 1 -->
+      <div class="grid-50-50">
+        <div class="glass-card anim-card" style="--i:3">
+          <h3 class="card-title">Weekly Violations + 4-Week Forecast</h3>
+          <div class="chart-wrap"><canvas id="chart-weekly-forecast"></canvas></div>
+        </div>
+        <div class="glass-card anim-card" style="--i:4">
+          <h3 class="card-title">Hourly Violation Pattern (24h)</h3>
+          <div class="chart-wrap"><canvas id="chart-hourly"></canvas></div>
+        </div>
+      </div>
+
+      <!-- Charts Row 2 -->
+      <div class="grid-50-50">
+        <div class="glass-card anim-card" style="--i:5">
+          <h3 class="card-title">Day of Week Pattern</h3>
+          <div class="chart-wrap"><canvas id="chart-day-of-week"></canvas></div>
+        </div>
+        <div class="glass-card anim-card" style="--i:6">
+          <h3 class="card-title">Monthly Trend</h3>
+          <div class="chart-wrap"><canvas id="chart-monthly"></canvas></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ───── TAB 4: PATROL ROUTES ───── -->
+    <section id="tab-patrol" class="tab-panel">
+      <div class="glass-card map-card anim-card" style="--i:0">
+        <h3 class="card-title">Optimized Patrol Routes</h3>
+        <div id="patrol-map" class="map-container" style="height:500px;"></div>
+      </div>
+      <div class="route-cards-row" id="route-cards-container"></div>
+    </section>
+
+    <!-- ───── TAB 5: ENFORCEMENT ───── -->
+    <section id="tab-enforcement" class="tab-panel">
+      <!-- KPI Row -->
+      <div class="kpi-row">
+        <div class="glass-card kpi-card kpi-cyan anim-card" style="--i:0">
+          <div class="kpi-icon">🗺️</div>
+          <div class="kpi-value" id="enf-total-zones">—</div>
+          <div class="kpi-label">Zones Analyzed</div>
+        </div>
+        <div class="glass-card kpi-card kpi-green anim-card" style="--i:1">
+          <div class="kpi-icon">↓</div>
+          <div class="kpi-value" id="enf-improving">—</div>
+          <div class="kpi-label">Improving Zones</div>
+        </div>
+        <div class="glass-card kpi-card kpi-red anim-card" style="--i:2">
+          <div class="kpi-icon">↑</div>
+          <div class="kpi-value" id="enf-worsening">—</div>
+          <div class="kpi-label">Worsening Zones</div>
+        </div>
+        <div class="glass-card kpi-card kpi-amber anim-card" style="--i:3">
+          <div class="kpi-icon">📉</div>
+          <div class="kpi-value" id="enf-avg-change">—</div>
+          <div class="kpi-label">Avg Change %</div>
+        </div>
+      </div>
+
+      <!-- Map -->
+      <div class="glass-card map-card anim-card" style="--i:4">
+        <h3 class="card-title">Enforcement Effectiveness Map</h3>
+        <div id="enforcement-map" class="map-container" style="height:450px;"></div>
+      </div>
+
+      <!-- Tables -->
+      <div class="grid-50-50">
+        <div class="glass-card anim-card" style="--i:5">
+          <h3 class="card-title accent-green-title">🟢 Top Improvers</h3>
+          <div class="table-scroll">
+            <table class="data-table" id="improvers-table">
+              <thead><tr><th>Location</th><th>Before</th><th>After</th><th>Change</th></tr></thead>
+              <tbody id="improvers-body"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="glass-card anim-card" style="--i:6">
+          <h3 class="card-title accent-red-title">🔴 Areas of Concern</h3>
+          <div class="table-scroll">
+            <table class="data-table" id="concern-table">
+              <thead><tr><th>Location</th><th>Before</th><th>After</th><th>Change</th></tr></thead>
+              <tbody id="concern-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ───── TAB 6: EQUITY & BIAS ───── -->
+    <section id="tab-bias" class="tab-panel">
+      <!-- KPI Row -->
+      <div class="kpi-row">
+        <div class="glass-card kpi-card kpi-cyan anim-card" style="--i:0">
+          <div class="kpi-icon">🎯</div>
+          <div class="kpi-value" id="bias-easy-ratio">—</div>
+          <div class="kpi-label">"Easy Target" Ratio</div>
+        </div>
+        <div class="glass-card kpi-card kpi-amber anim-card" style="--i:1">
+          <div class="kpi-icon">📈</div>
+          <div class="kpi-value" id="bias-quota-spike">—</div>
+          <div class="kpi-label">End-of-Month Spike</div>
+        </div>
+        <div class="glass-card kpi-card kpi-red anim-card" style="--i:2">
+          <div class="kpi-icon">⚖️</div>
+          <div class="kpi-value" id="bias-worst-station" style="font-size: 1.5rem; display: flex; align-items: center;">—</div>
+          <div class="kpi-label">Most Biased Station</div>
+        </div>
+      </div>
+
+      <!-- Charts Row 1 -->
+      <div class="grid-50-50">
+        <div class="glass-card anim-card" style="--i:3">
+          <h3 class="card-title">Station Bias vs Ticket Volume</h3>
+          <p style="color:var(--text-dim);font-size:0.85rem;margin-bottom:1rem;">Identifies stations that issue many tickets but deviate heavily from city-wide demographics (Targeting specific vehicles).</p>
+          <div class="chart-wrap"><canvas id="chart-bias-scatter"></canvas></div>
+        </div>
+        <div class="glass-card anim-card" style="--i:4">
+          <h3 class="card-title">Quota Hunting Detection (Day of Month)</h3>
+          <p style="color:var(--text-dim);font-size:0.85rem;margin-bottom:1rem;">Spikes in the final 5 days suggest enforcement driven by monthly quotas rather than actual congestion.</p>
+          <div class="chart-wrap"><canvas id="chart-bias-temporal"></canvas></div>
+        </div>
+      </div>
+
+      <!-- Tables Row -->
+      <div class="glass-card full-width anim-card" style="--i:5; margin-top: 1.5rem;">
+        <h3 class="card-title accent-red-title">Station Bias Rankings (Top 15)</h3>
+        <div class="table-scroll" style="height: 350px;">
+          <table class="data-table" id="bias-table">
+            <thead>
+              <tr>
+                <th>Rank</th>
+                <th>Police Station</th>
+                <th>Bias Score (Deviation)</th>
+                <th>Total Tickets</th>
+                <th>Easy Target Ratio</th>
+              </tr>
+            </thead>
+            <tbody id="bias-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ══════════════ FOOTER ══════════════ -->
+  <footer class="app-footer">
+    <p>Gridlock AI © 2024 · Built with data from Bengaluru Traffic Police · Powered by machine learning</p>
+  </footer>
+
+  <!-- Scripts (order matters) -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-annotation/3.0.1/chartjs-plugin-annotation.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
