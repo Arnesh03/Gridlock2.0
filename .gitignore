@@ -1,4 +1,35 @@
+# Data files
 *.csv
+
+# Python
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+*.egg-info/
+
+# Virtual environments
+venv/
+env/
+.venv/
+traffic_vision/venv/
+
+# Large model / binary files
+*.pt
+*.pth
+*.onnx
+*.so
+*.dylib
+*.dll
+
+# macOS
 .DS_Store
+
+# Logs
+server.log
+simulator.log
+accuracy.log
+
+# Editor
+.vscode/
+.idea/

@@ -1,0 +1,16 @@
+{
+    "timestamp": "2026-06-20T18:00:00Z",
+    "violations": [
+        {
+            "class": "bus",
+            "confidence": 0.8705,
+            "bbox": [
+                17.29,
+                230.59,
+                801.52,
+                768.41
+            ],
+            "violation_type": "Stop Line Crossing"
+        }
+    ]
+}

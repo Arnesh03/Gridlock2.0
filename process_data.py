@@ -114,29 +114,13 @@ def haversine(lat1, lng1, lat2, lng2):
     return R * c
 
 
-def holt_linear_forecast(y, alpha=0.5, beta=0.5, steps=4):
-    """Holt's Linear Exponential Smoothing for forecasting."""
-    n = len(y)
-    if n < 2:
-        return [y[0] if y else 0] * steps
-    
-    # Initialize level and trend
-    level = y[0]
-    trend = y[1] - y[0]
-    
-    for i in range(1, n):
-        last_level = level
-        level = alpha * y[i] + (1 - alpha) * (last_level + trend)
-        trend = beta * (level - last_level) + (1 - beta) * trend
-        
-    # Extrapolate with a decay factor to simulate seasonal moderation
-    decay = 0.9  
-    forecasts = []
-    current_trend = trend
-    for i in range(1, steps + 1):
-        current_trend *= decay
-        forecasts.append(max(0, level + current_trend * i))
-    return forecasts
+def moving_average_forecast(y, window=4, steps=4):
+    """Simple Moving Average for robust short-term forecasting."""
+    if not y:
+        return [0] * steps
+    w = min(window, len(y))
+    avg = sum(y[-w:]) / w
+    return [max(0, avg)] * steps
 
 
 def nearest_neighbor_route(points):
@@ -436,6 +420,13 @@ def compute_time_series(records):
     weekly_sorted = sorted(weekly_counter.keys())
     weekly = [{"week_start": w, "count": weekly_counter[w]} for w in weekly_sorted]
 
+    # Remove the last week if it is incomplete
+    if weekly and records:
+        max_date = max(r["date"] for r in records)
+        last_week_start = datetime.strptime(weekly[-1]["week_start"], "%Y-%m-%d").date()
+        if (max_date - last_week_start).days < 6:
+            weekly.pop()
+
     # Monthly counts
     monthly_counter = defaultdict(int)
     for r in records:
@@ -444,12 +435,12 @@ def compute_time_series(records):
     monthly_sorted = sorted(monthly_counter.keys())
     monthly = [{"month": m, "count": monthly_counter[m]} for m in monthly_sorted]
 
-    # Forecast: Holt's linear exponential smoothing with trend decay
+    # Forecast: Moving Average
     forecast = []
     if len(weekly) >= 8:
         last_8 = weekly[-8:]
         y = [w["count"] for w in last_8]
-        predicted_vals = holt_linear_forecast(y, alpha=0.6, beta=0.4, steps=4)
+        predicted_vals = moving_average_forecast(y, window=4, steps=4)
 
         last_week_date = datetime.strptime(last_8[-1]["week_start"], "%Y-%m-%d").date()
         for i, predicted in enumerate(predicted_vals, start=1):
@@ -460,6 +451,30 @@ def compute_time_series(records):
                 "lower": round(max(0, predicted * 0.85)),
                 "upper": round(predicted * 1.15),
             })
+
+    # Backtesting for Accuracy (MAPE)
+    mape = None
+    accuracy = None
+    if len(weekly) >= 12:
+        # Use previous 8 weeks to predict the most recent 4 weeks
+        train_weeks = weekly[-12:-4]
+        test_weeks = weekly[-4:]
+        
+        y_train = [w["count"] for w in train_weeks]
+        y_test = [w["count"] for w in test_weeks]
+        
+        predicted_test = moving_average_forecast(y_train, window=4, steps=4)
+        
+        errors = []
+        for actual, pred in zip(y_test, predicted_test):
+            if actual > 0:
+                errors.append(abs(actual - pred) / actual)
+            else:
+                errors.append(abs(actual - pred) / (actual + 1))  # Prevent division by zero
+                
+        if errors:
+            mape = (sum(errors) / len(errors)) * 100
+            accuracy = max(0.0, 100.0 - mape)
 
     # Hourly by day (for heatmap grid)
     hourly_by_day_data = defaultdict(lambda: Counter())
@@ -493,6 +508,14 @@ def compute_time_series(records):
     print(f"    Daily data points: {len(daily)}")
     print(f"    Weekly data points: {len(weekly)}")
     print(f"    Forecast: {len(forecast)} weeks ahead")
+    if accuracy is not None:
+        print(f"    Forecast Accuracy (Backtest): {accuracy:.1f}% (MAPE: {mape:.1f}%)")
+        try:
+            with open("accuracy.log", "a") as logf:
+                timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                logf.write(f"[{timestamp}] Model: Holt's Linear | Forecast Accuracy (Backtest): {accuracy:.1f}% | MAPE: {mape:.1f}%\n")
+        except Exception as e:
+            print(f"    Could not write to accuracy.log: {e}")
 
     return peak_hour, peak_day
 

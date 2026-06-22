@@ -1,0 +1,74 @@
+{
+    "plates": [
+        {
+            "text": "MADRID",
+            "confidence": 0.548,
+            "bbox": [
+                439,
+                329,
+                479,
+                349
+            ]
+        },
+        {
+            "text": "clactrcamEMTe",
+            "confidence": 0.3548,
+            "bbox": [
+                630,
+                430,
+                746,
+                456
+            ]
+        },
+        {
+            "text": "AO",
+            "confidence": 0.2822,
+            "bbox": [
+                334,
+                546,
+                366,
+                570
+            ]
+        },
+        {
+            "text": "cerq",
+            "confidence": 0.6342,
+            "bbox": [
+                557,
+                547,
+                619,
+                585
+            ]
+        },
+        {
+            "text": "MO",
+            "confidence": 0.4227,
+            "bbox": [
+                21,
+                601,
+                41,
+                623
+            ]
+        },
+        {
+            "text": "9",
+            "confidence": 0.7881,
+            "bbox": [
+                375,
+                535,
+                509,
+                667
+            ]
+        },
+        {
+            "text": "emisiones",
+            "confidence": 0.9999,
+            "bbox": [
+                551,
+                575,
+                684,
+                607
+            ]
+        }
+    ]
+}

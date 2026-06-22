@@ -6,8 +6,7 @@
 let appData = {};
 let maps = {};
 let charts = {};
-const rendered = { overview: false, hotspots: false, predictions: false, patrol: false, enforcement: false, bias: false, events: false };
-let liveFeedMarkers = {};
+const rendered = { overview: false, hotspots: false, predictions: false, patrol: false, enforcement: false };
 
 // ─── Chart.js Defaults (Dark Theme) ───
 Chart.defaults.color = '#94a3b8';
@@ -104,7 +103,7 @@ function createMap(id) {
 
 // ─── Data Loading ───
 async function loadAllData() {
-  const files = ['summary', 'heatmap', 'hotspots', 'time_series', 'patrol_routes', 'enforcement', 'bias', 'model_weights', 'events', 'barricades', 'diversion_routes'];
+  const files = ['summary', 'heatmap', 'hotspots', 'time_series', 'patrol_routes', 'enforcement', 'bias', 'model_weights'];
   const results = await Promise.all(files.map(f => fetch(`data/${f}.json`).then(r => r.json()).catch(() => null)));
   files.forEach((f, i) => appData[f] = results[i]);
 }
@@ -250,7 +249,7 @@ function renderEnforcement() {
 
   const eData = appData.enforcement;
   // KPIs
-  document.getElementById('enf-total-zones').textContent = eData.summary.total_zones.toLocaleString();
+  document.getElementById('enf-total-violations').textContent = eData.summary.total_zones.toLocaleString();
   document.getElementById('enf-improving').textContent = eData.summary.improving.toLocaleString();
   document.getElementById('enf-worsening').textContent = eData.summary.worsening.toLocaleString();
   document.getElementById('enf-avg-change').textContent = eData.summary.avg_change_pct.toFixed(1) + '%';
@@ -426,7 +425,6 @@ function activateTab(tab) {
     case 'patrol': renderPatrol(); break;
     case 'enforcement': renderEnforcement(); break;
     case 'bias': renderBias(); break;
-    case 'events': renderEvents(); break;
   }
   // Invalidate maps after DOM is visible
   setTimeout(() => {
@@ -461,9 +459,9 @@ function renderOverview() {
     if (hm) {
       let points = [];
       if (Array.isArray(hm)) {
-        points = hm.map(p => Array.isArray(p) ? [p[0], p[1], Math.pow(p[2], 0.3)] : [p.lat, p.lng, Math.pow(p.intensity || p.weight || 1, 0.3)]);
+        points = hm.map(p => Array.isArray(p) ? p : [p.lat, p.lng, p.intensity || p.weight || 1]);
       } else if (hm.points) {
-        points = hm.points.map(p => Array.isArray(p) ? [p[0], p[1], Math.pow(p[2], 0.3)] : [p.lat, p.lng, Math.pow(p.intensity || p.weight || 1, 0.3)]);
+        points = hm.points.map(p => Array.isArray(p) ? p : [p.lat, p.lng, p.intensity || p.weight || 1]);
       }
       if (points.length) {
         L.heatLayer(points, {
@@ -986,122 +984,6 @@ function renderPatrol() {
       container.appendChild(card);
     });
   } catch (e) { console.warn('Route cards error:', e); }
-}
-
-// ════════════════════════════════════════════════════════════
-// TAB 7: EVENT COMMAND CENTER & LIVE FEED
-// ════════════════════════════════════════════════════════════
-function renderEvents() {
-  if (rendered.events) return;
-  rendered.events = true;
-
-  const eventsData = appData.events || [];
-  const barricadesData = appData.barricades || {};
-  const diversionsData = appData.diversion_routes || [];
-
-  // Update KPIs
-  document.getElementById('evt-total-events').textContent = eventsData.length || 0;
-  
-  let totalBarricades = 0;
-  let totalOfficers = 0;
-  const deployments = barricadesData.deployments || [];
-  deployments.forEach(d => {
-    totalBarricades += d.recommended_units;
-    totalOfficers += d.personnel_required;
-  });
-  
-  document.getElementById('evt-total-barricades').textContent = totalBarricades;
-  document.getElementById('evt-total-officers').textContent = totalOfficers;
-  document.getElementById('evt-total-diversions').textContent = diversionsData.length || 0;
-
-  // Render Map
-  try {
-    const map = createMap('event-map');
-    maps.events = map;
-    const allCoords = [];
-
-    // 1. Draw Diversions (lines)
-    diversionsData.forEach(div => {
-      if (!div.waypoints) return;
-      const coords = div.waypoints.map(w => [w.lat, w.lng]);
-      L.polyline(coords, { color: COLORS.green, weight: 4, opacity: 0.7, dashArray: '10, 10' }).addTo(map);
-    });
-
-    // 2. Draw Events (circles)
-    eventsData.forEach(evt => {
-      L.circle([evt.lat, evt.lng], {
-        color: COLORS.red, fillColor: COLORS.red, fillOpacity: 0.2, radius: evt.impact_radius_m || 500
-      }).addTo(map).bindPopup(`<b>${evt.name}</b><br>Crowd: ${fmt(evt.crowd_size)}`);
-      allCoords.push([evt.lat, evt.lng]);
-    });
-
-    // 3. Draw Barricades/Choke Points (markers)
-    deployments.forEach(dep => {
-      const marker = L.circleMarker([dep.lat, dep.lng], {
-        radius: 8, color: '#fff', weight: 2, fillColor: COLORS.amber, fillOpacity: 0.9
-      }).addTo(map).bindPopup(`<b>${dep.choke_point}</b><br>Units: ${dep.recommended_units}<br>Officers: ${dep.personnel_required}`);
-      allCoords.push([dep.lat, dep.lng]);
-      liveFeedMarkers[dep.choke_point_id] = marker;
-    });
-
-    if (allCoords.length) map.fitBounds(allCoords, { padding: [30, 30] });
-  } catch (e) { console.warn('Event map error:', e); }
-
-  // Render Event Table
-  const evtBody = document.getElementById('event-list-body');
-  if (evtBody) {
-    eventsData.forEach(evt => {
-      evtBody.innerHTML += `<tr>
-        <td>${new Date(evt.start_time).toLocaleString()}</td>
-        <td>${evt.name}</td>
-        <td><span class="cis-badge ${cisClass(evt.expected_disruption * 10)}">${(evt.expected_disruption * 10).toFixed(1)}</span></td>
-        <td>${fmt(evt.crowd_size)}</td>
-      </tr>`;
-    });
-  }
-
-  // Render Deployment Table
-  const depBody = document.getElementById('deployment-body');
-  if (depBody) {
-    deployments.forEach(dep => {
-      depBody.innerHTML += `<tr>
-        <td>${dep.choke_point}</td>
-        <td>${dep.action}</td>
-        <td>${dep.recommended_units}</td>
-        <td>${fmtHour(dep.deploy_time)}</td>
-      </tr>`;
-    });
-  }
-
-  // Initialize SSE Live Feed
-  initLiveFeed();
-}
-
-function initLiveFeed() {
-  const source = new EventSource('/live');
-  
-  source.addEventListener('congestion_update', function(e) {
-    try {
-      const data = JSON.parse(e.data);
-      data.forEach(update => {
-        const marker = liveFeedMarkers[update.id];
-        if (marker) {
-          // Change color based on live congestion
-          marker.setStyle({ fillColor: cisColor(update.congestion_level) });
-          // Pulse effect by changing radius temporarily
-          const origRadius = 8;
-          marker.setRadius(origRadius + (update.congestion_level / 10));
-          setTimeout(() => marker.setRadius(origRadius), 500);
-        }
-      });
-    } catch (err) {
-      console.warn('Error processing SSE:', err);
-    }
-  });
-
-  source.addEventListener('error', function(e) {
-    console.warn('SSE disconnected, retrying...');
-  });
 }
 
 // ════════════════════════════════════════════════════════════

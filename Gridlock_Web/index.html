@@ -53,7 +53,6 @@
       <button class="tab-btn" data-tab="patrol"><span class="tab-icon">🚔</span> Patrol Routes</button>
       <button class="tab-btn" data-tab="enforcement"><span class="tab-icon">⚡</span> Enforcement</button>
       <button class="tab-btn" data-tab="bias"><span class="tab-icon">⚖️</span> Equity & Bias</button>
-      <button class="tab-btn" data-tab="events"><span class="tab-icon">📅</span> Command Center</button>
     </div>
   </nav>
 
@@ -356,67 +355,6 @@
             </thead>
             <tbody id="bias-table-body"></tbody>
           </table>
-        </div>
-      </div>
-    </section>
-
-    <!-- ───── TAB 7: EVENT COMMAND CENTER ───── -->
-    <section id="tab-events" class="tab-panel">
-      <!-- KPI Row -->
-      <div class="kpi-row">
-        <div class="glass-card kpi-card kpi-cyan anim-card" style="--i:0">
-          <div class="kpi-icon">📅</div>
-          <div class="kpi-value" id="evt-total-events">—</div>
-          <div class="kpi-label">Upcoming Events</div>
-        </div>
-        <div class="glass-card kpi-card kpi-amber anim-card" style="--i:1">
-          <div class="kpi-icon">🚧</div>
-          <div class="kpi-value" id="evt-total-barricades">—</div>
-          <div class="kpi-label">Barricade Units</div>
-        </div>
-        <div class="glass-card kpi-card kpi-red anim-card" style="--i:2">
-          <div class="kpi-icon">👮</div>
-          <div class="kpi-value" id="evt-total-officers">—</div>
-          <div class="kpi-label">Officers Deployed</div>
-        </div>
-        <div class="glass-card kpi-card kpi-green anim-card" style="--i:3">
-          <div class="kpi-icon">🔄</div>
-          <div class="kpi-value" id="evt-total-diversions">—</div>
-          <div class="kpi-label">Active Diversions</div>
-        </div>
-      </div>
-
-      <!-- Map & Tables Row -->
-      <div class="grid-60-40">
-        <!-- Event Map -->
-        <div class="glass-card map-card anim-card" style="--i:4">
-          <h3 class="card-title">Live Event Command Map</h3>
-          <div id="event-map" class="map-container" style="height:550px;"></div>
-        </div>
-
-        <!-- Tables Column -->
-        <div class="chart-stack">
-          <!-- Upcoming Events -->
-          <div class="glass-card anim-card" style="--i:5">
-            <h3 class="card-title accent-red-title">Upcoming Critical Events</h3>
-            <div class="table-scroll" style="height: 200px;">
-              <table class="data-table" id="event-list-table">
-                <thead><tr><th>Date</th><th>Event</th><th>Risk</th><th>Crowd</th></tr></thead>
-                <tbody id="event-list-body"></tbody>
-              </table>
-            </div>
-          </div>
-
-          <!-- Deployment Schedule -->
-          <div class="glass-card anim-card" style="--i:6">
-            <h3 class="card-title accent-amber-title">Barricade Deployment</h3>
-            <div class="table-scroll" style="height: 260px;">
-              <table class="data-table" id="deployment-table">
-                <thead><tr><th>Location</th><th>Type</th><th>Units</th><th>Action Time</th></tr></thead>
-                <tbody id="deployment-body"></tbody>
-              </table>
-            </div>
-          </div>
         </div>
       </div>
     </section>

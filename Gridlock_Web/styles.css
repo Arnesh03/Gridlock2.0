@@ -16,7 +16,6 @@
   --accent-red: #ff1744;
   --accent-green: #00e676;
   --accent-purple: #b388ff;
-  --accent-amber: #ffab00;
   --gradient-1: linear-gradient(135deg, #00e5ff, #0091ea);
   --gradient-2: linear-gradient(135deg, #ff1744, #ff6d00);
   --gradient-3: linear-gradient(135deg, #00e676, #00bfa5);
@@ -315,7 +314,6 @@ body::before {
 
 .accent-green-title::before { background: var(--gradient-3) !important; }
 .accent-red-title::before { background: var(--gradient-2) !important; }
-.accent-amber-title::before { background: var(--accent-amber) !important; }
 
 /* ─── KPI Row ─── */
 .kpi-row {
